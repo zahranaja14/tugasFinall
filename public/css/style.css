@@ -1,0 +1,170 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: #fdfafa;
+    color: #333;
+}
+
+/* NAVBAR */
+.navbar {
+    background: #921b1b;
+    padding: 15px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 0 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    color: white;
+    font-size: 20px;
+}
+
+.navbar nav a {
+    color: white;
+    margin-left: 20px;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.navbar nav a:hover {
+    color: #ffdcdc;
+}
+
+/* HERO */
+/* .hero {
+    height: 80vh;
+    background: linear-gradient(rgba(101, 97, 97, 0.85), rgba(125, 118, 118, 0.85)),
+        url('/images/bg-susu.jpg') center/cover no-repeat;
+    color: rgb(14, 1, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center; */
+
+
+.hero h1 {
+    font-size: 42px;
+}
+
+.hero p {
+    margin: 15px 0;
+    font-size: 18px;
+}
+
+/* SECTION */
+.section {
+    padding: 80px 40px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.title {
+    text-align: center;
+    margin-bottom: 40px;
+    color: #7b1e1e;
+    font-size: 32px;
+}
+
+/* TENTANG */
+/* TENTANG */
+.tentang {
+    text-align: center;
+}
+
+.tentang h2 {
+    color: #7b1e1e;
+    font-size: 32px;
+    margin-bottom: 25px;
+}
+
+.tentang p {
+    max-width: 800px;
+    margin: 15px auto;
+    font-size: 16px;
+    line-height: 1.8;
+    color: #333;
+}
+
+/* MENU */
+.menu {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+}
+
+.card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 10px 20px rgba(0,0,0,.1);
+    transition: .3s;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+}
+
+.card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.card h3 {
+    margin-top: 15px;
+    color: #7b1e1e;
+}
+
+.price {
+    display: block;
+    font-weight: bold;
+    margin: 10px 0;
+    color: #5c1515;
+}
+
+/* BUTTON */
+.btn {
+    background: #7b1e1e;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.footer-bottom {
+    background: #7b1e1e;
+    color: #ffffff; /* PUTIH JELAS */
+    text-align: center;
+    padding: 15px 10px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 60px;
+}
+
+.btn:hover {
+    background: #5c1515;
+}
