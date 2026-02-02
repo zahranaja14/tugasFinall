@@ -2,103 +2,156 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\MenuController;
+use App\Http\Controllers\Admin\PesananController;
 
-/*
-|--------------------------------------------------------------------------
-| HOME
-|--------------------------------------------------------------------------
-*/
-
+// ===== PUBLIC ROUTES =====
 Route::get('/', function () {
-    return view('home', [
-        'items' => [
+    // Ambil menu dari database yang tersedia
+    $menus = \App\Models\Menu::where('tersedia', true)->get();
+    
+    // Jika tidak ada menu di database, gunakan data default
+    if ($menus->isEmpty()) {
+        $items = [
             [
                 'name' => 'Susu Murni Original',
                 'price' => 8000,
                 'desc' => 'Rasa asli, segar dan alami',
-                'img'  => 'https://images.unsplash.com/photo-1580910051074-7b7d8c8f44c2'
+                'img'  => asset('image/ori.jpg')
             ],
             [
                 'name' => 'Susu Murni Coklat',
                 'price' => 10000,
                 'desc' => 'Coklat premium manis legit',
-                'img'  => 'https://images.unsplash.com/photo-1604908177522-0506e3f1c1c3'
+                'img'  => asset('image/coklat.jpg')
             ],
             [
-                'name' => 'Susu Murni Strawberry',
+                'name' => 'Susu Murni Stroberi',
                 'price' => 10000,
                 'desc' => 'Segarnya buah strawberry',
-                'img'  => 'https://images.unsplash.com/photo-1627998792088-f8016b4385e4'
+                'img'  => asset('image/stroberi.jpg')
             ],
             [
                 'name' => 'Susu Murni Vanila',
                 'price' => 10000,
                 'desc' => 'Aroma vanila lembut',
-                'img'  => 'https://images.unsplash.com/photo-1605475128023-8a59b1a1d6aa'
+                'img'  => asset('image/vanila.jpg')
             ],
             [
                 'name' => 'Susu Murni Melon',
                 'price' => 10000,
                 'desc' => 'Rasa melon menyegarkan',
-                'img'  => 'https://images.unsplash.com/photo-1598514982840-8a5eafc13c0f'
+                'img'  => asset('image/melon.jpg')
             ],
-        ]
-    ]);
-});
+        ];
+    } else {
+        // Mapping nama menu ke gambar yang ada
+        $imageMap = [
+            'Susu Murni Original' => 'ori.jpg',
+            'Susu Murni Coklat' => 'coklat.jpg',
+            'Susu Murni Stroberi' => 'stroberi.jpg',
+            'Susu Murni Vanila' => 'vanila.jpg',
+            'Susu Murni Melon' => 'melon.jpg',
+        ];
 
-/*
-|--------------------------------------------------------------------------
-| CHECKOUT USER
-|--------------------------------------------------------------------------
-*/
+        // Mapping data dari database
+        $items = $menus->map(function($menu) use ($imageMap) {
+            $imageFile = $imageMap[$menu->nama_menu] ?? null;
+            $imgPath = $imageFile ? asset('image/' . $imageFile) : asset('image/default.jpg');
+            
+            return [
+                'name' => $menu->nama_menu,
+                'price' => $menu->harga,
+                'desc' => $menu->deskripsi ?? 'Menu lezat dari Kedai Barmud',
+                'img' => $menu->gambar ? asset('storage/' . $menu->gambar) : $imgPath
+            ];
+        })->toArray();
+    }
+    
+    return view('home', ['items' => $items]);
+})->name('home');
 
-/* tampil halaman checkout */
-Route::post('/checkout', function (Request $request) {
-    return view('checkout', [
-        'produk' => $request->produk,
-        'harga'  => $request->harga
-    ]);
-})->name('checkout');
+Route::get('/tentang', function () {
+    return view('tentang');
+})->name('tentang');
 
-/* proses checkout */
-Route::post('/checkout/store', function (Request $request) {
+Route::get('/menu', function () {
+    return view('menu');
+})->name('menu');
 
-    $pesanan = session()->get('pesanan', []);
+// ===== AUTH ROUTES =====
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    $total = $request->harga * $request->jumlah;
+// ===== USER ROUTES (Protected) =====
+Route::middleware(['auth'])->group(function () {
+    Route::post('/checkout', function (Request $request) {
+        return view('checkout', [
+            'produk' => $request->produk,
+            'harga'  => $request->harga
+        ]);
+    })->name('checkout');
 
-    $pesanan[] = [
-        'nama'   => $request->nama,
-        'alamat' => $request->alamat,
-        'produk' => $request->produk,
-        'jumlah' => $request->jumlah,
-        'total'  => $total,
-        'waktu'  => now()->format('d-m-Y H:i')
-    ];
+    Route::post('/checkout/store', function (Request $request) {
+        $total = $request->harga * $request->jumlah;
 
-    session(['pesanan' => $pesanan]);
+        // Simpan ke database
+        \App\Models\Pesanan::create([
+            'user_id'        => auth()->id(),
+            'nama'           => $request->nama,
+            'produk'         => $request->produk,
+            'jumlah'         => $request->jumlah,
+            'harga_satuan'   => $request->harga,
+            'total'          => $total,
+            'status'         => 'pending',
+        ]);
 
-    return redirect()->route('checkout.success');
+        // Tetap simpan ke session untuk backward compatibility
+        $pesanan = session()->get('pesanan', []);
+        $pesanan[] = [
+            'nama'   => $request->nama,
+            'produk' => $request->produk,
+            'jumlah' => $request->jumlah,
+            'total'  => $total,
+            'waktu'  => now()->format('d-m-Y H:i'),
+            'user_id' => auth()->id(),
+            'user_name' => auth()->user()->name
+        ];
 
-})->name('checkout.store');
+        session(['pesanan' => $pesanan]);
+        return redirect()->route('checkout.success');
+    })->name('checkout.store');
+
     Route::get('/checkout/success', function () {
-    return view('COsukses');
-})->name('checkout.success');
+        return view('COsukses');
+    })->name('checkout.success');
 
+    Route::get('/user/profile', function () {
+        return view('user.profile');
+    })->name('user.profile');
 
-/*
-|--------------------------------------------------------------------------
-| ADMIN
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/admin/pesanan', function () {
-    return view('admin.pesanan', [
-        'pesanan' => session('pesanan', [])
-    ]);
+    Route::get('/user/pesanan', function () {
+        $pesanan = \App\Models\Pesanan::where('user_id', auth()->id())->latest()->get();
+        return view('user.pesanan', ['pesanan' => $pesanan]);
+    })->name('user.pesanan');
 });
 
-Route::post('/admin/reset', function () {
-    session()->forget('pesanan');
-    return back();
+// ===== ADMIN ROUTES (Protected) =====
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // CRUD Menu
+    Route::resource('menus', MenuController::class);
+    
+    // Kelola Pesanan
+    Route::get('/pesanan', [PesananController::class, 'index'])->name('pesanan');
+    Route::patch('/pesanan/{pesanan}/status', [PesananController::class, 'updateStatus'])->name('pesanan.updateStatus');
+    Route::delete('/pesanan/{pesanan}', [PesananController::class, 'destroy'])->name('pesanan.destroy');
+    Route::post('/pesanan/reset', [PesananController::class, 'reset'])->name('reset');
 });

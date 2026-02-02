@@ -36,11 +36,6 @@
                    required
                    style="width:100%;padding:10px;margin-bottom:15px">
 
-            <input type="text" name="no_meja"
-                   placeholder="Nomor Meja"
-                   required
-                   style="width:100%;padding:10px;margin-bottom:15px">
-
             <input type="number" name="jumlah"
                    placeholder="Jumlah"
                    value="1"
